@@ -30,6 +30,6 @@ jobs:
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sessions
+          name: sessions-csv
           path: outputs/sessions.csv
           retention-days: 30

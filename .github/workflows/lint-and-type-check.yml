@@ -1,4 +1,4 @@
-name: Biome Check
+name: Lint and Type Check
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Run Biome Check
+    name: Run Lint and Type Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -28,3 +28,6 @@ jobs:
 
       - name: Run biome check
         run: pnpm check
+
+      - name: Run type check
+        run: pnpm typecheck

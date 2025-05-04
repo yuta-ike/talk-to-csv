@@ -2,11 +2,14 @@ import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import * as cheerio from "cheerio"
-import puppeteer from "puppeteer"
+import puppeteer from "puppeteer-core"
 import { selectors } from "./selectors.ts"
 
 const BASE_URL = process.env.BASE_URL
 const TALKS_URL = `${BASE_URL}/talks`
+
+// GitHub Actions環境かどうか判定する関数
+const isGithubActions = () => process.env.GITHUB_ACTIONS === "true"
 
 // セッション情報の型定義
 interface SessionInfo {
@@ -33,9 +36,19 @@ async function fetchRenderedHTML(url: string): Promise<string> {
   await sleep(1000)
   console.info(`URLにアクセス: ${url}`)
 
-  const browser = await puppeteer.launch({
-    headless: true,
-  })
+  const options = isGithubActions()
+    ? {
+        // GitHub Actionsの環境では、プリインストールされたChromeを使う
+        executablePath: "/usr/bin/google-chrome",
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      }
+    : {
+        // ローカル環境では通常通り起動する
+        headless: true,
+      }
+
+  const browser = await puppeteer.launch(options)
   const page = await browser.newPage()
   await page.goto(url, { waitUntil: "networkidle0" })
   const html = await page.content()
@@ -255,6 +268,7 @@ async function main(): Promise<void> {
     await saveToCSV(detailedSessions)
   } catch (error) {
     console.error("実行中にエラーが発生:", error)
+    process.exit(1)
   }
 }
 
