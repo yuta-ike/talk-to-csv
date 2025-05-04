@@ -1,0 +1,34 @@
+name: Fetch Sessions
+
+on:
+  workflow_dispatch: # 手動実行のみにするのだ
+
+jobs:
+  fetch-sessions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Fetch session data
+        run: pnpm start:ci
+
+      - name: Upload CSV artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sessions
+          path: outputs/sessions.csv
+          retention-days: 30
