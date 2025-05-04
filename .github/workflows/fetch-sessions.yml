@@ -1,7 +1,7 @@
 name: Fetch Sessions
 
 on:
-  workflow_dispatch: # 手動実行のみにするのだ
+  workflow_dispatch:
 
 jobs:
   fetch-sessions:
