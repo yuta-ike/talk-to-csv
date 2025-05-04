@@ -2,8 +2,9 @@ import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import * as cheerio from "cheerio"
-import puppeteer from "puppeteer-core"
 import { selectors } from "./selectors.ts"
+
+const LIMIT = process.env.LIMIT ? Number.parseInt(process.env.LIMIT, 10) : null
 
 const BASE_URL = process.env.BASE_URL
 const TALKS_URL = `${BASE_URL}/talks`
@@ -36,6 +37,9 @@ async function fetchRenderedHTML(url: string): Promise<string> {
   await sleep(1000)
   console.info(`URLにアクセス: ${url}`)
 
+  // 実行環境に応じて適切なPuppeteerパッケージを動的にインポートするのだ
+  const puppeteer = isGithubActions() ? await import("puppeteer-core") : await import("puppeteer")
+
   const options = isGithubActions()
     ? {
         // GitHub Actionsの環境では、プリインストールされたChromeを使う
@@ -48,7 +52,7 @@ async function fetchRenderedHTML(url: string): Promise<string> {
         headless: true,
       }
 
-  const browser = await puppeteer.launch(options)
+  const browser = await puppeteer.default.launch(options)
   const page = await browser.newPage()
   await page.goto(url, { waitUntil: "networkidle0" })
   const html = await page.content()
@@ -70,60 +74,62 @@ async function fetchSessionList(day?: string): Promise<SessionInfo[]> {
     const sessions: SessionInfo[] = []
 
     // セッション情報の抽出
-    $(selectors.sessionList.container).each((_index, element) => {
-      const titleElement = $(element).find(selectors.sessionList.title)
-      const speakerElement = $(element).find(selectors.sessionList.speaker)
+    $(selectors.sessionList.container)
+      .slice(0, LIMIT ?? Number.MAX_SAFE_INTEGER)
+      .each((_index, element) => {
+        const titleElement = $(element).find(selectors.sessionList.title)
+        const speakerElement = $(element).find(selectors.sessionList.speaker)
 
-      const title = titleElement.text().trim()
-      const speaker = speakerElement.text().trim()
+        const title = titleElement.text().trim()
+        const speaker = speakerElement.text().trim()
 
-      // トラック情報を取得
-      const trackElement = $(element)
-        .closest("[class*='bg-white']")
-        .find(selectors.sessionList.trackElement)
-      const track = trackElement.text().trim()
+        // トラック情報を取得
+        const trackElement = $(element)
+          .closest("[class*='bg-white']")
+          .find(selectors.sessionList.trackElement)
+        const track = trackElement.text().trim()
 
-      // セッション詳細ページへのリンクを取得
-      let detailPageUrl: string | undefined
-      const linkElement = titleElement.parent().filter(selectors.sessionList.linkElement)
-      if (linkElement.length > 0) {
-        detailPageUrl = `${BASE_URL}${linkElement.attr("href")}`
-      }
+        // セッション詳細ページへのリンクを取得
+        let detailPageUrl: string | undefined
+        const linkElement = titleElement.parent().filter(selectors.sessionList.linkElement)
+        if (linkElement.length > 0) {
+          detailPageUrl = `${BASE_URL}${linkElement.attr("href")}`
+        }
 
-      // LTセッションは複数のセッションが含まれている場合がある（class="flex flex-col gap-5"を持つ要素）
-      const ltContainer = $(element).find(selectors.sessionList.ltContainer)
-      if (ltContainer.length > 0) {
-        // LTセッションの場合、各セッションを個別に取得
-        ltContainer.find(selectors.sessionList.ltItems).each((_i, ltElement) => {
-          const ltTitle = $(ltElement).find(selectors.sessionList.title).text().trim()
-          const ltSpeaker = $(ltElement).find(selectors.sessionList.speaker).text().trim()
-          let ltDetailPageUrl: string | undefined
+        // LTセッションは複数のセッションが含まれている場合がある（class="flex flex-col gap-5"を持つ要素）
+        const ltContainer = $(element).find(selectors.sessionList.ltContainer)
+        if (ltContainer.length > 0) {
+          // LTセッションの場合、各セッションを個別に取得
+          ltContainer.find(selectors.sessionList.ltItems).each((_i, ltElement) => {
+            const ltTitle = $(ltElement).find(selectors.sessionList.title).text().trim()
+            const ltSpeaker = $(ltElement).find(selectors.sessionList.speaker).text().trim()
+            let ltDetailPageUrl: string | undefined
 
-          const ltLinkElement = $(ltElement).find(selectors.sessionList.linkElement)
-          if (ltLinkElement.length > 0) {
-            ltDetailPageUrl = `${BASE_URL}${ltLinkElement.attr("href")}`
-          }
+            const ltLinkElement = $(ltElement).find(selectors.sessionList.linkElement)
+            if (ltLinkElement.length > 0) {
+              ltDetailPageUrl = `${BASE_URL}${ltLinkElement.attr("href")}`
+            }
 
-          if (ltTitle && ltSpeaker) {
-            sessions.push({
-              title: ltTitle,
-              speaker: ltSpeaker,
-              day: currentDay,
-              track,
-              detailPageUrl: ltDetailPageUrl,
-            })
-          }
-        })
-      } else if (title && speaker) {
-        sessions.push({
-          title,
-          speaker,
-          day: currentDay,
-          track,
-          detailPageUrl,
-        })
-      }
-    })
+            if (ltTitle && ltSpeaker) {
+              sessions.push({
+                title: ltTitle,
+                speaker: ltSpeaker,
+                day: currentDay,
+                track,
+                detailPageUrl: ltDetailPageUrl,
+              })
+            }
+          })
+        } else if (title && speaker) {
+          sessions.push({
+            title,
+            speaker,
+            day: currentDay,
+            track,
+            detailPageUrl,
+          })
+        }
+      })
 
     console.info(`${sessions.length}件のセッション情報を取得しました`)
     return sessions
@@ -152,7 +158,7 @@ async function fetchSessionDetail(session: SessionInfo): Promise<SessionInfo> {
     }
 
     // サムネイル画像のURLを取得
-    const thumbnailImg = $(selectors.sessionDetail.thumbnailImg).first()
+    const thumbnailImg = $(selectors.sessionDetail.thumbnailImg(session.title)).first()
     if (thumbnailImg.length > 0) {
       session.thumbnailUrl = thumbnailImg.attr("src")
       if (session.thumbnailUrl && !session.thumbnailUrl.startsWith("http")) {

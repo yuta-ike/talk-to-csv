@@ -12,10 +12,10 @@ export const selectors = {
 
   // セッション詳細ページのセレクタ
   sessionDetail: {
-    description: ".prose",
-    thumbnailImg: ".rounded-lg.overflow-hidden img",
-    speakerSection: ".bg-white.rounded-lg",
-    speakerAffiliation: "p.text-sm.text-gray-600",
-    speakerProfile: ".mt-4",
+    description: ".px-6.md\\:px-8.lg\\:px-10.gap-6.flex.flex-col.md\\:text-lg > p",
+    thumbnailImg: (title: string) => `img[alt='${title}']`,
+    speakerSection: ".bg-blue-light-200.p-6.rounded-xl",
+    speakerAffiliation: ".flex.flex-col.gap-2 > p:first-child",
+    speakerProfile: ".flex.flex-col.gap-2 > p:nth-child(2)",
   },
 }
