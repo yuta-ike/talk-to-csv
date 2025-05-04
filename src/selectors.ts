@@ -18,4 +18,4 @@ export const selectors = {
     speakerAffiliation: "p.text-sm.text-gray-600",
     speakerProfile: ".mt-4",
   },
-};
+}

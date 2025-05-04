@@ -8,10 +8,8 @@
     "start": "node --env-file=.env --disable-warning=ExperimentalWarning --experimental-strip-types src/index.ts",
     "start:ci": "node --disable-warning=ExperimentalWarning --experimental-strip-types src/index.ts",
     "build": "tsc",
-    "lint": "biome lint .",
-    "format": "biome format . --write",
-    "check": "biome check .",
-    "check:fix": "biome check . --apply"
+    "check": "biome check",
+    "fix": "biome check --write"
   },
   "keywords": [],
   "author": "",

@@ -29,6 +29,3 @@ jobs:
 
       - name: Run biome check
         run: pnpm check
-
-      - name: Run biome format check
-        run: pnpm format -- --write=false
