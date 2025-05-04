@@ -25,6 +25,8 @@ jobs:
 
       - name: Fetch session data
         run: pnpm start:ci
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
 
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
