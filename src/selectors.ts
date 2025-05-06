@@ -17,5 +17,14 @@ export const selectors = {
     speakerSection: ".bg-blue-light-200.p-6.rounded-xl",
     speakerAffiliation: ".flex.flex-col.gap-2 > p:first-child",
     speakerProfile: ".flex.flex-col.gap-2 > p:nth-child(2)",
+
+    // メタデータのセレクタ
+    pageTitle: "title",
+    metaOgTitle: "meta[property='og:title']",
+    metaOgDescription: "meta[property='og:description']",
+    metaOgImage: "meta[property='og:image']",
+    metaTwitterTitle: "meta[name='twitter:title']",
+    metaTwitterDescription: "meta[name='twitter:description']",
+    metaTwitterImage: "meta[name='twitter:image']",
   },
 }

@@ -27,6 +27,14 @@ interface SessionInfo {
   speakerTwitter?: string
   speakerIconUrl?: string
   detailPageUrl?: string
+  pageTitle?: string
+  metaDescription?: string
+  ogTitle?: string
+  ogDescription?: string
+  ogImage?: string
+  twitterTitle?: string
+  twitterDescription?: string
+  twitterImage?: string
 }
 
 const sleep = (ms: number): Promise<void> => {
@@ -204,6 +212,52 @@ async function fetchSessionDetail(session: SessionInfo): Promise<SessionInfo> {
       }
     })
 
+    // ページタイトルを取得
+    const pageTitle = $(selectors.sessionDetail.pageTitle).text().trim()
+    if (pageTitle) {
+      session.pageTitle = pageTitle
+    }
+
+    // metaタグからdescriptionを取得（HTMLのmeta description）
+    const metaDesc = $("meta[name='description']").attr("content")
+    if (metaDesc) {
+      session.metaDescription = metaDesc
+    }
+
+    // OGメタデータの取得
+    const ogTitle = $(selectors.sessionDetail.metaOgTitle).attr("content")
+    if (ogTitle) {
+      session.ogTitle = ogTitle
+    }
+
+    const ogDescription = $(selectors.sessionDetail.metaOgDescription).attr("content")
+    if (ogDescription) {
+      session.ogDescription = ogDescription
+    }
+
+    const ogImage = $(selectors.sessionDetail.metaOgImage).attr("content")
+    if (ogImage) {
+      session.ogImage = ogImage.startsWith("http") ? ogImage : `${BASE_URL}${ogImage}`
+    }
+
+    // Twitterメタデータの取得
+    const twitterTitle = $(selectors.sessionDetail.metaTwitterTitle).attr("content")
+    if (twitterTitle) {
+      session.twitterTitle = twitterTitle
+    }
+
+    const twitterDescription = $(selectors.sessionDetail.metaTwitterDescription).attr("content")
+    if (twitterDescription) {
+      session.twitterDescription = twitterDescription
+    }
+
+    const twitterImage = $(selectors.sessionDetail.metaTwitterImage).attr("content")
+    if (twitterImage) {
+      session.twitterImage = twitterImage.startsWith("http")
+        ? twitterImage
+        : `${BASE_URL}${twitterImage}`
+    }
+
     return session
   } catch (error) {
     console.error(`詳細情報の取得中にエラーが発生しました: ${session.title}`, error)
@@ -225,6 +279,15 @@ async function saveToCSV(sessions: SessionInfo[]): Promise<void> {
     "speakerGithub",
     "speakerTwitter",
     "speakerIconUrl",
+    "detailPageUrl",
+    "pageTitle",
+    "metaDescription",
+    "ogTitle",
+    "ogDescription",
+    "ogImage",
+    "twitterTitle",
+    "twitterDescription",
+    "twitterImage",
   ]
 
   let csvContent = `${headers.join(",")}\n`
